@@ -1,0 +1,31 @@
+ /*------------------------------------------------------
+  *   FILE NAME   : sample.proto
+  *   CREATE DATE : 2025-04-15
+  *   MODULE      : DC
+  *   AUTHOR      : wanch
+  *-----------------------------------------------------*/
+syntax = "proto3";
+package test.sample;
+
+message Gps
+{
+  int64 timestamp = 1;
+  Coordinate position = 2;
+  int32 speed = 3;
+}
+
+message Coordinate
+{
+  int32 longitude = 1;
+  int32 latitude = 2;
+}
+
+message Polygon
+{
+  repeated Coordinate points = 1;
+}
+
+message Polyline
+{
+  repeated Coordinate points = 1;
+}
