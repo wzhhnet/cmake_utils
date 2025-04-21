@@ -5,19 +5,20 @@
 #   AUTHOR      : wanch
 ###############################################################################
 cmake_minimum_required(VERSION 3.16)
-cmake_policy(SET CMP0097 NEW) #GIT_SUBMODULES "" means "no submodules at all"
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.16.0")
+    cmake_policy(SET CMP0097 NEW) #GIT_SUBMODULES "" means "no submodules at all"
+endif()
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+    cmake_policy(SET CMP0135 NEW)
+endif()
 
 include(ExternalProject)
-option (PROTOBUF_SOURCE "Download protobuf source from git" ON)
-
-if (PROTOBUF_DOWNLOAD)
-    set (PROTOBUF_GIT_URL "git@github.com:protocolbuffers/protobuf.git")
-    set (PROTOBUF_GIT_TAG "v3.20.1")
-else ()
-    set (PROTOBUF_URL "") #TODO: path for archive file
-    set (PROTOBUF_SOURCE_DIR "") #TODO: path for source code
-endif ()
-
+set (PROTOBUF_VERSION "v3.20.1")
+set (PROTOBUF_GIT_URL "git@github.com:protocolbuffers/protobuf.git")
+set (PROTOBUF_GIT_TAG "${PROTOBUF_VERSION}")
+#set (PROTOBUF_URL "${CMAKE_CURRENT_LIST_DIR}/package/protobuf-${PROTOBUF_VERSION}.tar.gz")
+set (PROTOBUF_URL "https://github.com/protocolbuffers/protobuf/archive/refs/tags/${PROTOBUF_VERSION}.tar.gz")
+set (PROTOBUF_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/source/protobuf")
 set (PROTOBUF_HOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/protobuf_host_install)
 set (PROTOBUF_TARGET_INSTALL_DIR ${CMAKE_BINARY_DIR}/protobuf_target_install)
 set (PROTOBUF_COMMON_ARGS 
@@ -32,14 +33,14 @@ set (PROTOBUF_COMMON_ARGS
 ExternalProject_Add (
     protobuf_host
     PREFIX ${CMAKE_BINARY_DIR}/protobuf_host
-    URL ${PROTOBUF_URL}
+    URL "" #TODO:${PROTOBUF_URL}
     GIT_REPOSITORY ${PROTOBUF_GIT_URL}
     GIT_TAG ${PROTOBUF_GIT_TAG}
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
     GIT_SUBMODULES_RECURSE OFF
     GIT_PROGRESS ON
-    SOURCE_DIR ${PROTOBUF_SOURCE_DIR}
+    SOURCE_DIR "" #TODO:${PROTOBUF_SOURCE_DIR}
     SOURCE_SUBDIR cmake
     CMAKE_ARGS ${PROTOBUF_COMMON_ARGS}
         "-DCMAKE_INSTALL_PREFIX=${PROTOBUF_HOST_INSTALL_DIR}"
@@ -67,14 +68,14 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
     ExternalProject_Add (
         protobuf_target
         PREFIX ${CMAKE_BINARY_DIR}/protobuf_target
-        URL ${PROTOBUF_URL}
-        GIT_REPOSITORY ${PROTOBUF_GIT_URL}
-        GIT_TAG ${PROTOBUF_GIT_TAG}
+	URL "" #TODO:${PROTOBUF_URL}
+	GIT_REPOSITORY ${PROTOBUF_GIT_URL}
+	GIT_TAG ${PROTOBUF_GIT_TAG}
         GIT_SHALLOW ON
         GIT_SUBMODULES ""
         GIT_SUBMODULES_RECURSE OFF
         GIT_PROGRESS ON
-        SOURCE_DIR ${PROTOBUF_SOURCE_DIR}
+	SOURCE_DIR "" #TODO:${PROTOBUF_SOURCE_DIR}
         SOURCE_SUBDIR cmake
         CMAKE_ARGS ${PROTOBUF_TARGET_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build . -- -j 8

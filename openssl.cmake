@@ -26,26 +26,25 @@ else ()
     set (OPENSSL_ARCH linux-x86_64)
 endif ()
 
-set (ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}") #TODO
-set (PACK_DIR "${ROOT_DIR}/package")
 set (OPENSSL_PREFIX "${CMAKE_BINARY_DIR}/openssl")
-set (OPENSSL_URL "") #TODO
 set (OPENSSL_GIT_URL "git@github.com:openssl/openssl.git")
 set (OPENSSL_GIT_TAG "OpenSSL_1_1_1w")
+#set (OPENSSL_URL "${CMAKE_CURRENT_LIST_DIR}/package/${OPENSSL_GIT_TAG}.tar.gz")
+set (OPENSSL_URL "https://github.com/openssl/openssl/archive/refs/tags/${OPENSSL_GIT_TAG}.tar.gz")
 set (OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl_install)
-set (OPENSSL_SOURCE_DIR "") #TODO
+set (OPENSSL_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/source/openssl")
 set (OPENSSL_CONFIG_ARGS ${OPENSSL_ARCH} no-hw no-asm no-engine no-shared --prefix=${OPENSSL_INSTALL_DIR})
 
 ExternalProject_Add (openssl
     PREFIX ${OPENSSL_PREFIX}
-    URL ${OPENSSL_URL}
+    URL "" #TODO:${OPENSSL_URL}
     GIT_REPOSITORY ${OPENSSL_GIT_URL}
     GIT_TAG ${OPENSSL_GIT_TAG}
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
     GIT_SUBMODULES_RECURSE OFF
     GIT_PROGRESS ON
-    SOURCE_DIR ${OPENSSL_SOURCE_DIR}
+    SOURCE_DIR "" #TODO:${OPENSSL_SOURCE_DIR}
     CONFIGURE_COMMAND
         ${CMAKE_COMMAND} -E env ${ANDROID_ENV}
         ./Configure ${OPENSSL_CONFIG_ARGS}
