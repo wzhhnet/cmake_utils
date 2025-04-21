@@ -1,0 +1,13 @@
+[submodule "source/lz4"]
+	path = source/lz4
+	url = https://github.com/lz4/lz4.git
+[submodule "source/zlib"]
+	path = source/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "source/openssl"]
+        path = source/openssl
+        url = https://github.com/openssl/openssl.git
+[submodule "source/protobuf"]
+        path = source/protobuf
+        url = https://github.com/protocolbuffers/protobuf.git
+
