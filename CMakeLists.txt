@@ -4,7 +4,9 @@ project(cmake_test LANGUAGES C CXX)
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 list(APPEND CMAKE_MODULE_PATH ${ROOT_DIR})
 
-include(protobuf)
+include (lz4)
+include (openssl)
+include (protobuf)
 BUILD_PROTO_TARGET("sample_proto" "${ROOT_DIR}/proto")
 
-include (openssl)
+add_custom_target(build_test DEPENDS lz4 openssl protobuf)

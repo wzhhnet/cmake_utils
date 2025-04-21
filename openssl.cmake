@@ -31,7 +31,7 @@ set (PACK_DIR "${ROOT_DIR}/package")
 set (OPENSSL_PREFIX "${CMAKE_BINARY_DIR}/openssl")
 set (OPENSSL_URL "") #TODO
 set (OPENSSL_GIT_URL "git@github.com:openssl/openssl.git")
-set (OPENSSL_GIT_TAT "OpenSSL_1_1_1w")
+set (OPENSSL_GIT_TAG "OpenSSL_1_1_1w")
 set (OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl_install)
 set (OPENSSL_SOURCE_DIR "") #TODO
 set (OPENSSL_CONFIG_ARGS ${OPENSSL_ARCH} no-hw no-asm no-engine no-shared --prefix=${OPENSSL_INSTALL_DIR})
