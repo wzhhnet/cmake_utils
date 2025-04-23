@@ -62,7 +62,7 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
             "-DCMAKE_INSTALL_PREFIX=${PROTOBUF_HOST_INSTALL_DIR}"
             "-Dprotobuf_BUILD_PROTOC_BINARIES=ON"
         BUILD_COMMAND
-            ${CMAKE_COMMAND} --build . --target protoc -j 8
+            ${CMAKE_COMMAND} --build . -- -j 8
         BUILD_BYPRODUCTS
             ${PROTOBUF_HOST_INSTALL_DIR}/bin/protoc
     )
