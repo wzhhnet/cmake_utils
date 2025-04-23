@@ -12,88 +12,66 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-include(ExternalProject)
 set (PROTOBUF_VERSION "v3.20.1")
 set (PROTOBUF_GIT_URL "git@github.com:protocolbuffers/protobuf.git")
 set (PROTOBUF_GIT_TAG "${PROTOBUF_VERSION}")
 #set (PROTOBUF_URL "${CMAKE_CURRENT_LIST_DIR}/package/protobuf-${PROTOBUF_VERSION}.tar.gz")
 set (PROTOBUF_URL "https://github.com/protocolbuffers/protobuf/archive/refs/tags/${PROTOBUF_VERSION}.tar.gz")
-set (PROTOBUF_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/source/protobuf")
 set (PROTOBUF_HOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/protobuf_host_install)
-set (PROTOBUF_TARGET_INSTALL_DIR ${CMAKE_BINARY_DIR}/protobuf_target_install)
-set (PROTOBUF_COMMON_ARGS 
-    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-    "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
-    "-Dprotobuf_BUILD_TESTS=OFF"
-    "-Dprotobuf_BUILD_SHARED_LIBS=OFF"
-    "-Dprotobuf_WITH_ZLIB=OFF"
-)
 
-# Build protobuf host
-ExternalProject_Add (
-    protobuf_host
-    PREFIX ${CMAKE_BINARY_DIR}/protobuf_host
-    URL "" #TODO:${PROTOBUF_URL}
+include (FetchContent)
+FetchContent_Declare(
+    protobuf
+    #URL ${PROTOBUF_URL}
     GIT_REPOSITORY ${PROTOBUF_GIT_URL}
     GIT_TAG ${PROTOBUF_GIT_TAG}
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
     GIT_SUBMODULES_RECURSE OFF
-    GIT_PROGRESS ON
-    SOURCE_DIR "" #TODO:${PROTOBUF_SOURCE_DIR}
     SOURCE_SUBDIR cmake
-    CMAKE_ARGS ${PROTOBUF_COMMON_ARGS}
-        "-DCMAKE_INSTALL_PREFIX=${PROTOBUF_HOST_INSTALL_DIR}"
-        "-Dprotobuf_BUILD_PROTOC_BINARIES=ON"
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . -- -j 8
-    BUILD_BYPRODUCTS
-        ${PROTOBUF_HOST_INSTALL_DIR}/bin/protoc
 )
-set (PROTOBUF_TARGETS protobuf_host)
 
-# Cross compile for protobuf target
+set (protobuf_BUILD_TESTS OFF CACHE INTERNAL "")
+set (protobuf_BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+set (protobuf_WITH_ZLIB OFF CACHE INTERNAL "")
+
+FetchContent_MakeAvailable(protobuf)
+set (DEPEND_TARGETS libprotobuf)
+
+# Check if we are cross-compiling
 if (DEFINED CMAKE_TOOLCHAIN_FILE)
-    set (PROTOBUF_TARGET_ARGS ${PROTOBUF_COMMON_ARGS}
-        "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
-        "-DCMAKE_INSTALL_PREFIX=${PROTOBUF_TARGET_INSTALL_DIR}"
-        "-Dprotobuf_BUILD_PROTOC_BINARIES=OFF"
-    )
-    if (ANDROID)
-        set (PROTOBUF_TARGET_ARGS ${PROTOBUF_TARGET_ARGS}
-            -DANDROID_ABI=${CMAKE_ANDROID_ARCH_ABI}
-            -DANDROID_NDK=${CMAKE_ANDROID_NDK}
-        )
-    endif (ANDROID)
-    # Build protobuf target
+    # Build host protoc
+    include(ExternalProject)
     ExternalProject_Add (
-        protobuf_target
-        PREFIX ${CMAKE_BINARY_DIR}/protobuf_target
-	URL "" #TODO:${PROTOBUF_URL}
-	GIT_REPOSITORY ${PROTOBUF_GIT_URL}
-	GIT_TAG ${PROTOBUF_GIT_TAG}
+        protobuf_host
+        PREFIX ${CMAKE_BINARY_DIR}/protobuf_host
+        #URL ${PROTOBUF_URL}
+        GIT_REPOSITORY ${PROTOBUF_GIT_URL}
+        GIT_TAG ${PROTOBUF_GIT_TAG}
         GIT_SHALLOW ON
         GIT_SUBMODULES ""
         GIT_SUBMODULES_RECURSE OFF
         GIT_PROGRESS ON
-	SOURCE_DIR "" #TODO:${PROTOBUF_SOURCE_DIR}
         SOURCE_SUBDIR cmake
-        CMAKE_ARGS ${PROTOBUF_TARGET_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . -- -j 8
+        CMAKE_ARGS
+            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+            "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
+            "-Dprotobuf_BUILD_TESTS=OFF"
+            "-Dprotobuf_BUILD_SHARED_LIBS=OFF"
+            "-Dprotobuf_WITH_ZLIB=OFF"
+            "-DCMAKE_INSTALL_PREFIX=${PROTOBUF_HOST_INSTALL_DIR}"
+            "-Dprotobuf_BUILD_PROTOC_BINARIES=ON"
+        BUILD_COMMAND
+            ${CMAKE_COMMAND} --build . --target protoc -j 8
         BUILD_BYPRODUCTS
-            ${PROTOBUF_TARGET_INSTALL_DIR}/lib/libprotobuf.a
-            ${PROTOBUF_TARGET_INSTALL_DIR}/include/google/protobuf
+            ${PROTOBUF_HOST_INSTALL_DIR}/bin/protoc
     )
-    list (APPEND PROTOBUF_TARGETS protobuf_target)
+    list (APPEND DEPEND_TARGETS protobuf_host)
+    set (PROTOC_EXECUTABLE ${PROTOBUF_HOST_INSTALL_DIR}/bin/protoc)
 else ()
-    set (PROTOBUF_TARGET_INSTALL_DIR ${PROTOBUF_HOST_INSTALL_DIR})
+    list (APPEND DEPEND_TARGETS protoc)
+    set (PROTOC_EXECUTABLE ${protobuf_BINARY_DIR}/protoc)
 endif ()
-
-set (Protobuf_INCLUDE_DIRS ${PROTOBUF_TARGET_INSTALL_DIR}/include
-    CACHE INTERNAL "Protobuf include directories")
-set (Protobuf_LIBRARIES ${PROTOBUF_TARGET_INSTALL_DIR}/lib/libprotobuf.a
-    CACHE INTERNAL "Protobuf libraries")
-set (Protobuf_PROTOC_EXECUTABLE ${PROTOBUF_HOST_INSTALL_DIR}/bin/protoc
-    CACHE INTERNAL "Protobuf compiler")
 
 ###############################################################################
 # Automatically generate source files from .proto schema files and create 
@@ -126,7 +104,7 @@ function (BUILD_PROTO_TARGET TARGET_NAME PROTO_PATH)
     endforeach()
     add_custom_command (
         OUTPUT  ${GEN_SRCS}
-        COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+        COMMAND ${PROTOC_EXECUTABLE}
         ARGS ${PROTOC_PARAMS} ${PROTOC_PROTO_FILES}
         WORKING_DIRECTORY ${PROTO_PATH}
         DEPENDS ${PROTOC_PROTO_FILES} ${Protobuf_PROTOC_EXECUTABLE}
@@ -134,10 +112,7 @@ function (BUILD_PROTO_TARGET TARGET_NAME PROTO_PATH)
     )
     add_compile_options(-fPIC)
     add_library (${TARGET_NAME} STATIC ${GEN_SRCS})
-    target_link_libraries (${TARGET_NAME} PUBLIC ${Protobuf_LIBRARIES})
-    target_include_directories (${TARGET_NAME} PUBLIC
-        ${Protobuf_INCLUDE_DIRS}
-        ${OUT_PATH}
-    )
-    add_dependencies (${TARGET_NAME} ${PROTOBUF_TARGETS})
+    target_link_libraries (${TARGET_NAME} PUBLIC libprotobuf)
+    target_include_directories (${TARGET_NAME} PUBLIC ${OUT_PATH})
+    add_dependencies (${TARGET_NAME} ${DEPEND_TARGETS})
 endfunction ()

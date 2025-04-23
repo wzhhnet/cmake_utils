@@ -12,8 +12,9 @@ list(APPEND CMAKE_MODULE_PATH ${ROOT_DIR})
 
 include (lz4)
 include (zlib)
+include (zstd)
 include (openssl)
 include (protobuf)
 BUILD_PROTO_TARGET("sample_proto" "${ROOT_DIR}/proto")
 
-add_custom_target(build_test DEPENDS lz4 zlib openssl protobuf)
+add_custom_target(build_test DEPENDS lz4 zlib openssl libprotobuf libzstd_static)
